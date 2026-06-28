@@ -5,6 +5,8 @@ import com.martin.url_shortener.dto.ShortenResponse;
 import com.martin.url_shortener.model.ShortUrl;
 import com.martin.url_shortener.repository.ShortUrlRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -31,10 +33,16 @@ public class UrlShortenerService {
         return toResponse(shortUrl);
     }
 
+    @Cacheable(value = "urls", key = "#code")
     public Optional<ShortUrl> findByCode(String code) {
         return shortUrlRepository.findByCode(code)
                 .filter(ShortUrl::isActive)
                 .filter(u -> u.getExpiresAt() == null || u.getExpiresAt().isAfter(LocalDateTime.now()));
+    }
+
+    @CacheEvict(value = "urls", key = "#code")
+    public void invalidarCache(String code) {
+        // elimina la entrada del caché cuando sea necesario
     }
 
     private ShortenResponse toResponse(ShortUrl shortUrl) {
