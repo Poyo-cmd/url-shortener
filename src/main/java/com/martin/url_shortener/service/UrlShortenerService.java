@@ -1,5 +1,7 @@
 package com.martin.url_shortener.service;
 
+import com.martin.url_shortener.dto.ShortenRequest;
+import com.martin.url_shortener.dto.ShortenResponse;
 import com.martin.url_shortener.model.ShortUrl;
 import com.martin.url_shortener.repository.ShortUrlRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,32 +16,46 @@ public class UrlShortenerService {
 
     private final ShortUrlRepository shortUrlRepository;
 
-    public ShortUrl createShortUrl(String originalUrl) {
-        String code = generateUniqueCode();
+    public ShortenResponse createShortUrl(ShortenRequest request, int diasExpiracion) {
+        String code = generarCodigoUnico();
 
         ShortUrl shortUrl = ShortUrl.builder()
                 .code(code)
-                .originalUrl(originalUrl)
+                .originalUrl(request.url())
                 .createdAt(LocalDateTime.now())
+                .expiresAt(LocalDateTime.now().plusDays(diasExpiracion))
                 .active(true)
                 .build();
 
-        return shortUrlRepository.save(shortUrl);
+        shortUrlRepository.save(shortUrl);
+        return toResponse(shortUrl);
     }
 
     public Optional<ShortUrl> findByCode(String code) {
-        return shortUrlRepository.findByCode(code);
+        return shortUrlRepository.findByCode(code)
+                .filter(ShortUrl::isActive)
+                .filter(u -> u.getExpiresAt() == null || u.getExpiresAt().isAfter(LocalDateTime.now()));
     }
 
-    private String generateUniqueCode() {
-        String characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private ShortenResponse toResponse(ShortUrl shortUrl) {
+        return new ShortenResponse(
+                shortUrl.getCode(),
+                "http://localhost:8080/" + shortUrl.getCode(),
+                shortUrl.getOriginalUrl(),
+                shortUrl.getCreatedAt(),
+                shortUrl.getExpiresAt()
+        );
+    }
+
+    private String generarCodigoUnico() {
+        String caracteres = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         String code;
 
         do {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < 6; i++) {
-                int index = (int) (Math.random() * characters.length());
-                sb.append(characters.charAt(index));
+                int index = (int) (Math.random() * caracteres.length());
+                sb.append(caracteres.charAt(index));
             }
             code = sb.toString();
         } while (shortUrlRepository.existsByCode(code));
