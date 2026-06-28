@@ -2,7 +2,9 @@ package com.martin.url_shortener.controller;
 
 import com.martin.url_shortener.dto.ShortenRequest;
 import com.martin.url_shortener.dto.ShortenResponse;
+import com.martin.url_shortener.dto.StatsResponse;
 import com.martin.url_shortener.service.UrlShortenerService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,11 +26,21 @@ public class UrlShortenerController {
     }
 
     @GetMapping("/{code}")
-    public ResponseEntity<Void> redirigir(@PathVariable String code) {
+    public ResponseEntity<Void> redirigir(@PathVariable String code, HttpServletRequest request) {
         return urlShortenerService.findByCode(code)
-                .map(shortUrl -> ResponseEntity.status(HttpStatus.FOUND)
-                        .location(URI.create(shortUrl.getOriginalUrl()))
-                        .<Void>build())
+                .map(shortUrl -> {
+                    urlShortenerService.registrarClick(shortUrl, request.getRemoteAddr());
+                    return ResponseEntity.status(HttpStatus.FOUND)
+                            .location(URI.create(shortUrl.getOriginalUrl()))
+                            .<Void>build();
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/api/stats/{code}")
+    public ResponseEntity<StatsResponse> estadisticas(@PathVariable String code) {
+        return urlShortenerService.obtenerEstadisticas(code)
+                .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 }

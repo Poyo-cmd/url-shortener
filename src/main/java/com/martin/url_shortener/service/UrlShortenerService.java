@@ -2,7 +2,10 @@ package com.martin.url_shortener.service;
 
 import com.martin.url_shortener.dto.ShortenRequest;
 import com.martin.url_shortener.dto.ShortenResponse;
+import com.martin.url_shortener.dto.StatsResponse;
+import com.martin.url_shortener.model.Click;
 import com.martin.url_shortener.model.ShortUrl;
+import com.martin.url_shortener.repository.ClickRepository;
 import com.martin.url_shortener.repository.ShortUrlRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -17,6 +20,7 @@ import java.util.Optional;
 public class UrlShortenerService {
 
     private final ShortUrlRepository shortUrlRepository;
+    private final ClickRepository clickRepository;
 
     public ShortenResponse createShortUrl(ShortenRequest request, int diasExpiracion) {
         String code = generarCodigoUnico();
@@ -38,6 +42,27 @@ public class UrlShortenerService {
         return shortUrlRepository.findByCode(code)
                 .filter(ShortUrl::isActive)
                 .filter(u -> u.getExpiresAt() == null || u.getExpiresAt().isAfter(LocalDateTime.now()));
+    }
+
+    public void registrarClick(ShortUrl shortUrl, String ipAddress) {
+        Click click = Click.builder()
+                .shortUrl(shortUrl)
+                .clickedAt(LocalDateTime.now())
+                .ipAddress(ipAddress)
+                .build();
+        clickRepository.save(click);
+    }
+
+    public Optional<StatsResponse> obtenerEstadisticas(String code) {
+        return shortUrlRepository.findByCode(code)
+                .map(shortUrl -> new StatsResponse(
+                        shortUrl.getCode(),
+                        shortUrl.getOriginalUrl(),
+                        clickRepository.countByShortUrlId(shortUrl.getId()),
+                        clickRepository.contarClicksUltimos7Dias(shortUrl.getId()),
+                        shortUrl.getCreatedAt(),
+                        shortUrl.getExpiresAt()
+                ));
     }
 
     @CacheEvict(value = "urls", key = "#code")
