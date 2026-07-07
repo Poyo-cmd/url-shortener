@@ -1,29 +1,50 @@
-# URL Shortener API
+# URL Shortener
 
-REST API para acortar URLs construida con Java 21 y Spring Boot 3. Incluye autenticación JWT, caché con Redis, estadísticas de clicks y documentación interactiva con Swagger.
+Acortador de URLs full stack con autenticación JWT, caché con Redis y estadísticas de clicks.
+
+## Estructura
+
+```
+url-shortener/
+├── src/          # API REST (Java 21 + Spring Boot)
+├── frontend/     # Interfaz web (Vue 3)
+├── Dockerfile
+└── docker-compose.yml
+```
 
 ## Tech Stack
 
-- **Java 21** + **Spring Boot 3.5**
-- **PostgreSQL** — persistencia de datos
-- **Redis** — caché de URLs frecuentes
-- **Spring Security** + **JWT** — autenticación
-- **Flyway** — migraciones de base de datos
-- **Docker** + **Docker Compose** — contenerización
-- **Swagger / OpenAPI** — documentación interactiva
+**Backend**
+- Java 21 + Spring Boot 3.5
+- PostgreSQL — persistencia
+- Redis — caché de URLs
+- Spring Security + JWT — autenticación
+- Flyway — migraciones
+- Docker + Docker Compose
 
-## Requisitos
-
-- Docker Desktop
+**Frontend**
+- Vue 3 + Pinia + Vue Router
+- Diseño minimalista oscuro
 
 ## Levantar el proyecto
+
+**Solo el backend (con base de datos y Redis):**
 
 ```bash
 docker compose up --build
 ```
 
-La API estará disponible en `http://localhost:8080`  
-La documentación Swagger en `http://localhost:8080/swagger-ui`
+**Frontend en desarrollo:**
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+La API estará en `http://localhost:8080`  
+El frontend en `http://localhost:5173`  
+Swagger en `http://localhost:8080/swagger-ui`
 
 ## Endpoints
 
@@ -37,49 +58,17 @@ La documentación Swagger en `http://localhost:8080/swagger-ui`
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
 | POST | `/api/shorten` | Acortar una URL |
-| GET | `/api/stats/{code}` | Ver estadísticas de una URL |
+| GET | `/api/stats/{code}` | Estadísticas de una URL |
 
 ### Redirección (público)
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
 | GET | `/{code}` | Redirigir a la URL original |
 
-## Ejemplo de uso
-
-**Registrarse:**
-```json
-POST /api/auth/register
-{
-  "email": "usuario@email.com",
-  "password": "123456"
-}
-```
-
-**Acortar una URL:**
-```json
-POST /api/shorten
-Authorization: Bearer {token}
-
-{
-  "url": "https://www.ejemplo.com/articulo-muy-largo"
-}
-```
-
-**Respuesta:**
-```json
-{
-  "code": "aB3kZx",
-  "shortUrl": "http://localhost:8080/aB3kZx",
-  "originalUrl": "https://www.ejemplo.com/articulo-muy-largo",
-  "createdAt": "2026-07-07T10:00:00",
-  "expiresAt": "2026-08-06T10:00:00"
-}
-```
-
 ## Características
 
 - URLs con expiración automática a 30 días
-- Caché con Redis — redirecciones en microsegundos tras el primer acceso
+- Caché con Redis — redirecciones en microsegundos
 - Registro de clicks con IP y timestamp
-- Validación de URLs malformadas
-- Errores con mensajes descriptivos en español
+- Validación de URLs y errores descriptivos
+- Documentación interactiva con Swagger
