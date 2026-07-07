@@ -4,6 +4,7 @@ import com.martin.url_shortener.dto.ShortenRequest;
 import com.martin.url_shortener.dto.ShortenResponse;
 import com.martin.url_shortener.dto.StatsResponse;
 import com.martin.url_shortener.service.UrlShortenerService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import java.net.URI;
 
 @RestController
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 public class UrlShortenerController {
 
     private final UrlShortenerService urlShortenerService;
